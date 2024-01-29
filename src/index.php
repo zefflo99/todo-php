@@ -5,7 +5,7 @@ if (file_exists('todos.json')) {
     $todos = json_decode(file_get_contents('todos.json'), true);
 }
 
-
+// add to-do
 if (isset($_POST['addButton'])) {
     $newTodo = $_POST['inputName'];
     if (!empty($newTodo)) {
@@ -14,7 +14,7 @@ if (isset($_POST['addButton'])) {
     }
 }
 
-
+// delete to-do
 if (isset($_POST['deleteButton'])) {
     $indexToDelete = $_POST['deleteButton'];
     if (isset($todos[$indexToDelete])) {
@@ -23,16 +23,16 @@ if (isset($_POST['deleteButton'])) {
     }
 }
 
-
-if (isset($_POST['toggleCompleted'])) {
-    $indexToToggleCompleted = $_POST['toggleCompleted'];
-    if (isset($todos[$indexToToggleCompleted])) {
-        $todos[$indexToToggleCompleted]['completed'] = !$todos[$indexToToggleCompleted]['completed'];
+// validate to-do
+if (isset($_POST['todoCompleted'])) {
+    $todoCompleted = $_POST['todoCompleted'];
+    if (isset($todos[$todoCompleted])) {
+        $todos[$todoCompleted]['completed'] = !$todos[$todoCompleted]['completed'];
         saveTodos($todos);
     }
 }
 
-// Sauvegarde des tâches dans le fichier JSON
+
 function saveTodos($todos) {
     file_put_contents('todos.json', json_encode($todos, JSON_PRETTY_PRINT));
     header('Location: index.php');
@@ -70,6 +70,15 @@ function saveTodos($todos) {
             outline: none;
             border-bottom: 1px dashed black;
         }
+
+
+        .completed-true {
+            color: green;
+        }
+
+        .completed-false {
+            color: red;
+        }
     </style>
 </head>
 <body>
@@ -85,14 +94,14 @@ function saveTodos($todos) {
     <form method="post" action="index.php">
         <div class="todo">
             <div>
-                <span class="editable" contenteditable="true"><?= $todo['text'] ?></span>
+                <span class="editable <?= $todo['completed'] ? 'completed-true' : 'completed-false' ?>" contenteditable="true"><?= $todo['text'] ?></span>
                 <input type="hidden" name="editedTextIndex" value="<?= $index ?>">
             </div>
             <div class="todo-controls">
                 <button type="submit" name="deleteButton" value="<?= $index ?>">Delete</button>
                 <button type="submit" name="moveUpButton" value="<?= $index ?>">Move Up</button>
                 <button type="submit" name="moveDownButton" value="<?= $index ?>">Move Down</button>
-                <button type="submit" name="toggleCompleted" value="<?= $index ?>">Toggle Completed</button>
+                <button type="submit" name="todoCompleted" value="<?= $index ?>">todo Completed</button>
             </div>
         </div>
     </form>
