@@ -23,6 +23,28 @@ if (isset($_POST['deleteButton'])) {
     }
 }
 
+// Move the tasks up
+if (isset($_POST['moveUpButton'])) {
+    $indexToMoveUp = $_POST['moveUpButton'];
+    if ($indexToMoveUp > 0) {
+        $temp = $todos[$indexToMoveUp];
+        $todos[$indexToMoveUp] = $todos[$indexToMoveUp - 1];
+        $todos[$indexToMoveUp - 1] = $temp;
+        saveTodos($todos);
+    }
+}
+// Moove the tasks Down
+if (isset($_POST['moveDownButton'])) {
+    $indexToMoveDown = $_POST['moveDownButton'];
+    if ($indexToMoveDown < count($todos) - 1) {
+        $temp = $todos[$indexToMoveDown];
+        $todos[$indexToMoveDown] = $todos[$indexToMoveDown + 1];
+        $todos[$indexToMoveDown + 1] = $temp;
+        saveTodos($todos);
+    }
+}
+
+
 // validate to-do
 if (isset($_POST['todoCompleted'])) {
     $todoCompleted = $_POST['todoCompleted'];
