@@ -1,0 +1,32 @@
+.todo {
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.todo-controls {
+    display: flex;
+    gap: 5px;
+}
+
+.editable {
+    cursor: pointer;
+    text-align: center;
+    width: 20vw;
+    border: 0;
+}
+
+.editable:focus {
+    outline: none;
+    border-bottom: 1px dashed black;
+}
+
+
+.completed-true {
+    color: green;
+}
+
+.completed-false {
+    color: red;
+}

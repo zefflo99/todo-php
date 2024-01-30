@@ -1,4 +1,8 @@
 <?php
+session_start();
+
+$error = "";
+
 
 $todos = [];
 if (file_exists('todos.json')) {
@@ -11,6 +15,8 @@ if (isset($_POST['addButton'])) {
     if (!empty($newTodo)) {
         $todos[] = ['text' => $newTodo, 'completed' => false];
         saveTodos($todos);
+    } else{
+        $error = "valeur incorrect";
     }
 }
 
@@ -23,8 +29,20 @@ if (isset($_POST['deleteButton'])) {
     }
 }
 
+
+if (isset($_POST["editButton"], $_POST["editedText"])){
+    $indexToEdit = $_POST['editButton'];
+    if (isset($todos[$indexToEdit])) {
+        $todos[$indexToEdit]['text'] = $_POST["editedText"];
+        saveTodos($todos);
+    }
+}
+
+
+
 // Move the tasks up
 if (isset($_POST['moveUpButton'])) {
+    //verifier si y'a au min 2 éléments
     $indexToMoveUp = $_POST['moveUpButton'];
     if ($indexToMoveUp > 0) {
         $temp = $todos[$indexToMoveUp];
@@ -33,8 +51,9 @@ if (isset($_POST['moveUpButton'])) {
         saveTodos($todos);
     }
 }
-// Moove the tasks Down
+// Move the tasks Down
 if (isset($_POST['moveDownButton'])) {
+    //verifier si y'a au min 2 éléments
     $indexToMoveDown = $_POST['moveDownButton'];
     if ($indexToMoveDown < count($todos) - 1) {
         $temp = $todos[$indexToMoveDown];
@@ -69,39 +88,8 @@ function saveTodos($todos) {
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>ToDo App</title>
-    <style>
-        .todo {
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    <link rel="stylesheet" href="style.css">
 
-        .todo-controls {
-            display: flex;
-            gap: 5px;
-        }
-
-        .editable {
-            cursor: pointer;
-            border-bottom: 1px dashed transparent;
-        }
-
-        .editable:focus {
-            outline: none;
-            border-bottom: 1px dashed black;
-        }
-
-
-        .completed-true {
-            color: green;
-        }
-
-        .completed-false {
-            color: red;
-        }
-    </style>
 </head>
 <body>
 <h1>Add Note</h1>
@@ -111,14 +99,13 @@ function saveTodos($todos) {
     </label>
     <button type="submit" name="addButton">Submit</button>
 </form>
-
-<?php foreach ($todos as $index => $todo): ?>
-    <form method="post" action="index.php">
+<form method="post" action="index.php">
+    <?php foreach ($todos as $index => $todo): ?>
         <div class="todo">
-            <div>
-                <span class="editable <?= $todo['completed'] ? 'completed-true' : 'completed-false' ?>" contenteditable="true"><?= $todo['text'] ?></span>
-                <input type="hidden" name="editedTextIndex" value="<?= $index ?>">
-            </div>
+            <button type="submit" name="editButton" value="<?= $index ?>">edit</button>
+            <label>
+                <input type="text" class="editable <?= $todo['completed'] ? 'completed-true' : 'completed-false' ?>" value="<?= htmlspecialchars($todo['text']) ?>" name="editedText">
+            </label>
             <div class="todo-controls">
                 <button type="submit" name="deleteButton" value="<?= $index ?>">Delete</button>
                 <button type="submit" name="moveUpButton" value="<?= $index ?>">Move Up</button>
@@ -126,7 +113,18 @@ function saveTodos($todos) {
                 <button type="submit" name="todoCompleted" value="<?= $index ?>">todo Completed</button>
             </div>
         </div>
-    </form>
-<?php endforeach; ?>
+    <?php endforeach; ?>
+    <div class="buttonTri">
+        <button type="submit" name="sortAZ">sort A to Z</button>
+        <button type="submit" name="sortZA">sort Z to A</button>
+    </div>
+</form>
+<?php if (!empty($error)) : ?>
+    <div class="class">
+        <h1 class="p-3 px-12">
+            <?php echo $error; ?>
+        </h1>
+    </div>
+<?php endif; ?>
 </body>
 </html>
