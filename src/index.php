@@ -1,87 +1,107 @@
 <?php
+
 session_start();
 
-$error = "";
+$dsn = "sqlite: data.db";
 
+$options = [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+    PDO::ATTR_EMULATE_PREPARES => false,
+];
 
-$todos = [];
-if (file_exists('todos.json')) {
-    $todos = json_decode(file_get_contents('todos.json'), true);
-}
+$pdo = new PDO($dsn, null, null, $options);
 
-// add to-do
+$errorMessage2 = '';
+
+// Fetch tous les todos de la base de données
+$query = $pdo->prepare("SELECT * FROM todo ORDER BY ordre");
+$query->execute();
+$todos = $query->fetchAll(PDO::FETCH_ASSOC);
+
+// Ajouter une nouvelle tâche
 if (isset($_POST['addButton'])) {
     $newTodo = $_POST['inputName'];
     if (!empty($newTodo)) {
-        $todos[] = ['text' => $newTodo, 'completed' => false];
-        saveTodos($todos);
-    } else{
-        $error = "valeur incorrect";
+        $insertData = $pdo->prepare('INSERT INTO todo (name, expiration, completed, ordre) VALUES (:nom, :date, :completed, :ordre)');
+        $insertData->execute(['nom' => $newTodo, 'date' => $_POST["todoDate"], 'completed' => 0, 'ordre' => count($todos)]);
+        header('Location: index.php');
+        exit();
     }
 }
 
-// delete to-do
+// Supprimer une tâche
 if (isset($_POST['deleteButton'])) {
-    $indexToDelete = $_POST['deleteButton'];
-    if (isset($todos[$indexToDelete])) {
-        unset($todos[$indexToDelete]);
-        saveTodos($todos);
-    }
+    $idToDelete = $_POST['deleteButton'];
+    $deleteData = $pdo->prepare('DELETE FROM todo WHERE id = :id');
+    $deleteData->execute(['id' => $idToDelete]);
+    header('Location: index.php');
+    exit();
 }
 
-
+// edit the tasks
 if (isset($_POST["editButton"], $_POST["editedText"])){
-    $indexToEdit = $_POST['editButton'];
-    if (isset($todos[$indexToEdit])) {
-        $todos[$indexToEdit]['text'] = $_POST["editedText"];
-        saveTodos($todos);
-    }
+    $idToEdit = $_POST['editButton'];
+    $editedText = $_POST["editedText"];
+    $updateData = $pdo->prepare('UPDATE todo SET name = :name WHERE id = :id');
+    $updateData->execute(['name' => $editedText, 'id' => $idToEdit]);
+    header('Location: index.php');
+    exit();
 }
 
-
-
-// Move the tasks up
+// Move tasks UP
 if (isset($_POST['moveUpButton'])) {
-    //verifier si y'a au min 2 éléments
-    $indexToMoveUp = $_POST['moveUpButton'];
+    $idToMoveUp = $_POST['moveUpButton'];
+    $indexToMoveUp = array_search($idToMoveUp, array_column($todos, 'id'));
+
     if ($indexToMoveUp > 0) {
         $temp = $todos[$indexToMoveUp];
         $todos[$indexToMoveUp] = $todos[$indexToMoveUp - 1];
         $todos[$indexToMoveUp - 1] = $temp;
-        saveTodos($todos);
+
+        // Mettre à jour la base de données avec la nouvelle ordonnance
+        foreach ($todos as $index => $todo) {
+            $updateOrder = $pdo->prepare('UPDATE todo SET ordre = :order WHERE id = :id');
+            $updateOrder->execute(['order' => $index, 'id' => $todo['id']]);
+        }
+
+        header('Location: index.php');
+        exit();
     }
 }
-// Move the tasks Down
+
+// move tasks Down
 if (isset($_POST['moveDownButton'])) {
-    //verifier si y'a au min 2 éléments
-    $indexToMoveDown = $_POST['moveDownButton'];
+    $idToMoveDown = $_POST['moveDownButton'];
+    $indexToMoveDown = array_search($idToMoveDown, array_column($todos, 'id'));
+
     if ($indexToMoveDown < count($todos) - 1) {
         $temp = $todos[$indexToMoveDown];
         $todos[$indexToMoveDown] = $todos[$indexToMoveDown + 1];
         $todos[$indexToMoveDown + 1] = $temp;
-        saveTodos($todos);
+
+
+        foreach ($todos as $index => $todo) {
+            $updateOrder = $pdo->prepare('UPDATE todo SET ordre = :order WHERE id = :id');
+            $updateOrder->execute(['order' => $index, 'id' => $todo['id']]);
+        }
+
+        header('Location: index.php');
+        exit();
     }
 }
 
-
-// validate to-do
 if (isset($_POST['todoCompleted'])) {
-    $todoCompleted = $_POST['todoCompleted'];
-    if (isset($todos[$todoCompleted])) {
-        $todos[$todoCompleted]['completed'] = !$todos[$todoCompleted]['completed'];
-        saveTodos($todos);
-    }
-}
-
-
-function saveTodos($todos) {
-    file_put_contents('todos.json', json_encode($todos, JSON_PRETTY_PRINT));
+    $idCompleted = $_POST['todoCompleted'];
+    $updateCompleted = $pdo->prepare('UPDATE todo SET completed = NOT completed WHERE id = :id');
+    $updateCompleted->execute(['id' => $idCompleted]);
     header('Location: index.php');
     exit();
 }
+
 ?>
 
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -89,42 +109,33 @@ function saveTodos($todos) {
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <link rel="stylesheet" href="style.css">
-
+    <title>ToDo App</title>
 </head>
 <body>
-<h1>Add Note</h1>
+<h1>Add the tasks</h1>
 <form method="post" action="index.php">
-    <label>
-        <input type="text" name="inputName" />
+    <label class="inputContainer">
+        <input class="inputTasks" type="text" name="inputName" />
     </label>
-    <button type="submit" name="addButton">Submit</button>
+    <div class="submitButton">
+        <button class="buttonSubmit" type="submit" name="addButton">submit</button>
+    </div>
 </form>
-<form method="post" action="index.php">
-    <?php foreach ($todos as $index => $todo): ?>
+<form class="formulary" method="post" action="index.php">
+    <?php foreach ($todos as $todo): ?>
         <div class="todo">
-            <button type="submit" name="editButton" value="<?= $index ?>">edit</button>
+            <button type="submit" name="editButton" value="<?= $todo['id'] ?>">Editer</button>
             <label>
-                <input type="text" class="editable <?= $todo['completed'] ? 'completed-true' : 'completed-false' ?>" value="<?= htmlspecialchars($todo['text']) ?>" name="editedText">
+                <input type="text" class="editable <?= $todo['completed'] ? 'completed-true' : 'completed-false' ?>" value="<?= htmlspecialchars($todo['name']) ?>" name="editedText">
             </label>
             <div class="todo-controls">
-                <button type="submit" name="deleteButton" value="<?= $index ?>">Delete</button>
-                <button type="submit" name="moveUpButton" value="<?= $index ?>">Move Up</button>
-                <button type="submit" name="moveDownButton" value="<?= $index ?>">Move Down</button>
-                <button type="submit" name="todoCompleted" value="<?= $index ?>">todo Completed</button>
+                <button type="submit" name="deleteButton" value="<?= $todo['id'] ?>">Delete</button>
+                <button type="submit" name="moveUpButton" value="<?= $todo['id'] ?>">Move Up</button>
+                <button type="submit" name="moveDownButton" value="<?= $todo['id'] ?>">Move Down</button>
+                <button type="submit" name="todoCompleted" value="<?= $todo['id'] ?>">todo Completed <?= $todo['completed'] ? 'non complétée' : 'complétée' ?></button>
             </div>
         </div>
     <?php endforeach; ?>
-    <div class="buttonTri">
-        <button type="submit" name="sortAZ">sort A to Z</button>
-        <button type="submit" name="sortZA">sort Z to A</button>
-    </div>
 </form>
-<?php if (!empty($error)) : ?>
-    <div class="class">
-        <h1 class="p-3 px-12">
-            <?php echo $error; ?>
-        </h1>
-    </div>
-<?php endif; ?>
 </body>
 </html>

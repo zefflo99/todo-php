@@ -1,13 +1,18 @@
+
+
+
 .todo {
     margin-bottom: 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+
 }
 
 .todo-controls {
     display: flex;
     gap: 5px;
+
 }
 
 .editable {
@@ -15,11 +20,13 @@
     text-align: center;
     width: 20vw;
     border: 0;
+
 }
 
 .editable:focus {
     outline: none;
     border-bottom: 1px dashed black;
+
 }
 
 
@@ -27,6 +34,49 @@
     color: green;
 }
 
+.inputContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 3vh;
+    margin: 0;
+
+}
+
+.inputTasks {
+    width: 200px;
+    padding: 10px;
+}
+
+.submitButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 3vh;
+    margin: 0;
+
+}
+
+.buttonSubmit {
+    width: 200px;
+    padding: 10px;
+    margin-top: 5vw;
+}
 .completed-false {
     color: red;
+}
+
+
+.formulary {
+    margin-top: 5vw;
+}
+button  {
+    background-color: black;
+    color: aliceblue;
+}
+
+h1 {
+    text-align: center;
+    margin-top: 5vw;
+    margin-bottom: 4vw;
 }
